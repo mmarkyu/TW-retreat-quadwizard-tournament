@@ -1,0 +1,2079 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quadwizard Tournament</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+/* ═══════════════════════════════════════════════════
+   ROOT VARIABLES
+═══════════════════════════════════════════════════ */
+:root {
+  --g-red:    #7a0001; --g-gold:   #D3A625;
+  --s-green:  #1A472A; --s-silver: #BEBEBE;
+  --h-yellow: #E8D44D; --h-dark:   #2E2600;
+  --r-blue:   #0D1840; --r-bronze: #946B2D;
+  --dark:     #000a1a;
+  --mid:      #000d25;
+  --gold:     #9BDDFF;
+  --gold-glow:rgba(155,221,255,.4);
+  --parch1:   #f6e8c2; --parch2: #e8d49e; --parch3: #f2deb0; --parch4: #e0c888;
+  --columbia-blue: #9BDDFF;
+  --columbia-navy: #003087;
+  /* Library palette (repurposed for navy theme) */
+  --ink:        #cce8ff;
+  --ink-deep:   #e8f6ff;
+  --ink-mid:    #9BDDFF;
+  --brass:      #5b9fd4;
+  --brass-light:#7bbde8;
+}
+
+/* ═══════════════════════════════════════════════════
+   RESET + BODY
+═══════════════════════════════════════════════════ */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'Cinzel', serif;
+  background: var(--dark);
+  color: #cce8ff;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ═══════════════════════════════════════════════════
+   BACKGROUND LAYERS — deep dark library wood
+═══════════════════════════════════════════════════ */
+#bg-layer {
+  position: fixed; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse at 20% 20%, rgba(0,48,135,.28) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(0,30,100,.22) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(0,10,45,.55) 0%, transparent 70%),
+    linear-gradient(170deg, #000a1a 0%, #000d25 40%, #000a1a 100%);
+}
+
+#bg-layer::after {
+  content: '';
+  position: absolute; inset: 0;
+  background-image:
+    repeating-linear-gradient(88deg, transparent, transparent 55px, rgba(0,48,135,.022) 55px, rgba(90,45,0,.018) 56px),
+    repeating-linear-gradient(176deg, transparent, transparent 75px, rgba(0,30,100,.015) 75px, rgba(60,28,0,.013) 76px);
+}
+
+#particles { position: fixed; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+
+@keyframes ember-rise {
+  0%   { transform: translateY(0) translateX(0) scale(1);    opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: .6; }
+  100% { transform: translateY(-105vh) translateX(var(--drift)) scale(.3); opacity: 0; }
+}
+
+#stars { position: fixed; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+.star {
+  position: absolute; border-radius: 50%; background: #fff;
+  animation: twinkle var(--d, 3s) ease-in-out infinite alternate;
+}
+@keyframes twinkle {
+  from { opacity: .1; transform: scale(1); }
+  to   { opacity: .9; transform: scale(1.5); }
+}
+
+/* ═══════════════════════════════════════════════════
+   SCREENS
+═══════════════════════════════════════════════════ */
+.screen {
+  display: none; position: relative; z-index: 10;
+  min-height: 100vh; width: 100%;
+  flex-direction: column; align-items: center; justify-content: center;
+  padding: 1.5rem;
+}
+.screen.active { display: flex; }
+
+/* ═══════════════════════════════════════════════════
+   PARCHMENT CARD
+═══════════════════════════════════════════════════ */
+.parchment {
+  background: linear-gradient(145deg, var(--parch1) 0%, var(--parch2) 35%, var(--parch3) 65%, var(--parch4) 100%);
+  border-radius: 10px; color: #2e1d08;
+  position: relative;
+  box-shadow:
+    0 0 0 2px #a07820,
+    0 0 0 4px #7a5510,
+    0 0 0 6px rgba(201,168,76,.25),
+    0 12px 40px rgba(0,0,0,.6),
+    inset 0 1px 0 rgba(255,255,255,.18),
+    inset 0 0 30px rgba(0,0,0,.08);
+}
+.parchment::before {
+  content: '';
+  position: absolute; inset: 6px;
+  border: 1px solid rgba(139,105,20,.3);
+  border-radius: 3px;
+  pointer-events: none;
+}
+
+/* ═══════════════════════════════════════════════════
+   BUTTONS
+═══════════════════════════════════════════════════ */
+.btn {
+  font-family: 'Cinzel', serif; font-size: 1rem; font-weight: 600;
+  letter-spacing: .12em; padding: .85rem 2rem;
+  background: linear-gradient(135deg, #001a4a, #002a70);
+  color: #9BDDFF; border: 2px solid #9BDDFF; border-radius: 8px;
+  cursor: pointer; transition: all .28s; text-transform: uppercase;
+  position: relative; overflow: hidden;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+}
+.btn::after {
+  content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.18), transparent);
+  transition: left .5s;
+}
+.btn:hover::after { left: 100%; }
+.btn:hover {
+  background: linear-gradient(135deg, #002a70, #003a90);
+  box-shadow: 0 0 24px rgba(155,221,255,.45), 0 0 48px rgba(155,221,255,.2), inset 0 1px 0 rgba(255,255,255,.06);
+  transform: translateY(-3px);
+}
+.btn:active { transform: translateY(0); }
+.btn:disabled { opacity: .4; cursor: default; transform: none; }
+
+.btn-next {
+  background: linear-gradient(135deg, #2a1a0a, #3d2810);
+  border-color: #c9a84c;
+  color: #e8d5a3;
+}
+.btn-next:hover {
+  background: linear-gradient(135deg, #3d2810, #523818);
+  box-shadow: 0 0 24px rgba(201,168,76,.5), 0 0 48px rgba(201,168,76,.22), inset 0 1px 0 rgba(255,255,255,.06);
+  transform: translateY(-3px);
+}
+
+.btn-confirm {
+  background: linear-gradient(135deg, #001a4a, #002a70);
+  border-color: #9BDDFF;
+  color: #9BDDFF;
+  font-size: 1.1rem;
+  padding: 1rem 2.5rem;
+}
+.btn-confirm:hover {
+  background: linear-gradient(135deg, #002a70, #003a90);
+  box-shadow: 0 0 24px rgba(155,221,255,.45), 0 0 48px rgba(155,221,255,.2), inset 0 1px 0 rgba(255,255,255,.06);
+  transform: translateY(-3px);
+}
+
+/* ═══════════════════════════════════════════════════
+   TITLE SCREEN — cinematic dark redesign
+═══════════════════════════════════════════════════ */
+#title-screen {
+  gap: 0;
+  text-align: center;
+  justify-content: center;
+  padding: 2rem 1.5rem;
+  background-image: url('downloads/Goblet-of-Fire.webp');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: relative;
+}
+
+/* Deep dark veil — background becomes near-silhouette */
+#title-screen::before {
+  content: '';
+  position: absolute; inset: 0; z-index: 0;
+  background: rgba(0, 4, 18, 0.82);
+}
+
+/* Subtle cool tint — moonlit atmosphere */
+#title-screen::after {
+  content: '';
+  position: absolute; inset: 0; z-index: 2;
+  background: rgba(0, 15, 60, 0.06);
+  pointer-events: none;
+}
+
+#title-screen > * { position: relative; z-index: 3; }
+
+/* ── Magic dust particle container (blue-white, lives inside title screen) ── */
+#title-dust {
+  position: absolute; inset: 0; z-index: 1;
+  pointer-events: none; overflow: hidden;
+}
+@keyframes dust-rise {
+  0%   { transform: translateY(0) translateX(0); opacity: 0; }
+  12%  { opacity: 1; }
+  88%  { opacity: .6; }
+  100% { transform: translateY(-110vh) translateX(var(--tdrift)); opacity: 0; }
+}
+
+/* ── Tournament Title — HP-official elegant minimal style ── */
+.tournament-title {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(3.5rem, 9vw, 7rem);
+  font-weight: 400;
+  color: #ffffff;
+  text-shadow: 0 0 40px rgba(155, 221, 255, 0.25);
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  margin-bottom: 1.5rem;
+}
+
+/* ── Parchment scroll wrapper — directional shadow gives physical height ── */
+.scroll-wrap {
+  max-width: 620px; width: 100%;
+  /* Directional drop-shadow: light from upper-left, shadow falls lower-right */
+  filter:
+    drop-shadow(5px 10px 22px rgba(0,0,0,.85))
+    drop-shadow(10px 18px 40px rgba(0,0,0,.45));
+  transform-origin: top center;
+}
+
+@keyframes scrollUnroll {
+  from { transform: scaleY(0); opacity: 0; }
+  to   { transform: scaleY(1); opacity: 1; }
+}
+
+#title-screen.active .scroll-wrap {
+  animation: scrollUnroll 0.65s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+/* ── Scroll end-caps (the rolled curl strips) ── */
+.scroll-curl {
+  height: 32px;
+  background: linear-gradient(
+    to bottom,
+    #3a1e02 0%,
+    #7a3e08 15%,
+    #c89030 42%,
+    #ead060 54%,
+    #b87e28 70%,
+    #784808 86%,
+    #3a1e02 100%
+  );
+  position: relative; overflow: hidden;
+}
+.scroll-curl::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg,
+    rgba(0,0,0,.55) 0%,
+    rgba(0,0,0,.18) 12%,
+    transparent     30%,
+    transparent     70%,
+    rgba(0,0,0,.18) 88%,
+    rgba(0,0,0,.55) 100%
+  );
+}
+.scroll-curl-top    { border-radius: 6px 6px 0 0; box-shadow: 0 -3px 12px rgba(0,0,0,.5); }
+.scroll-curl-top::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(255,240,155,.28) 0%, transparent 65%);
+  pointer-events: none;
+}
+.scroll-curl-bottom { border-radius: 0 0 6px 6px; box-shadow: 0 5px 16px rgba(0,0,0,.5); transform: scaleY(-1); }
+
+/* ── Scroll body wrapper — worn parchment edges via clip-path ── */
+.scroll-body-wrap {
+  /* Slightly uneven polygon to suggest natural parchment wear — no clean rectangle */
+  clip-path: polygon(
+    0%     1.0%,  0.8%   0%,    3.2%   0.5%,
+    7%     0.1%,  18%    0.4%,  32%    0%,
+    50%    0.3%,  68%    0%,    82%    0.4%,
+    93%    0.1%,  96.8%  0.5%,  99.2%  0%,
+    100%   1.0%,  99.7%  99.0%, 99.2%  100%,
+    96.8%  99.5%, 93%    99.9%, 82%    99.6%,
+    68%    100%,  50%    99.7%, 32%    100%,
+    18%    99.6%, 7%     99.9%, 3.2%   99.5%,
+    0.8%   100%,  0%     99.0%
+  );
+  /* Rich aged parchment base — warm, uneven, darkened at edges */
+  background: linear-gradient(158deg,
+    #edd890 0%,   #e2c478 18%,
+    #ebd395 35%,  #d6b85c 52%,
+    #e2c884 68%,  #c8a84c 82%,
+    #d6c06c 92%,  #c2a040 100%
+  );
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── Scroll body — the actual parchment surface ── */
+.scroll-body {
+  background:
+    /* Age stain / discoloration patches — varied shapes, subtly different densities */
+    radial-gradient(ellipse 58% 40% at 11% 20%, rgba(100, 55, 10, .11) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 55% at 90% 68%, rgba(85,  44,  8, .09) 0%, transparent 70%),
+    radial-gradient(ellipse 28% 24% at 44% 90%, rgba(80,  38,  6, .08) 0%, transparent 70%),
+    radial-gradient(ellipse 48% 30% at 66%  7%, rgba(95,  50, 10, .07) 0%, transparent 70%),
+    radial-gradient(ellipse 22% 38% at 79% 32%, rgba(70,  32,  5, .06) 0%, transparent 70%),
+    radial-gradient(ellipse 35% 20% at 25% 55%, rgba(110, 60, 12, .05) 0%, transparent 70%),
+    /* Fine diagonal grain — two axes for weave texture */
+    repeating-linear-gradient(
+      52deg,
+      transparent 0px,           transparent 2px,
+      rgba(0,0,0,.012) 2px,  rgba(0,0,0,.012) 3px,
+      transparent 3px,           transparent 7px
+    ),
+    repeating-linear-gradient(
+      -38deg,
+      transparent 0px,           transparent 3px,
+      rgba(0,0,0,.009) 3px,  rgba(0,0,0,.009) 4px,
+      transparent 4px,           transparent 10px
+    ),
+    /* Paper texture image */
+    url('paper.jpg') center center / cover,
+    /* Warm multiply base — deepens the parchment color */
+    linear-gradient(158deg,
+      #dfc06a 0%,   #d2ac50 18%,
+      #dac474 35%,  #c69c3c 52%,
+      #d6bc64 68%,  #bc8c2a 82%,
+      #ccac54 92%,  #b48028 100%
+    );
+  mix-blend-mode: multiply;
+  color: var(--ink);
+  padding: 2.6rem 3.2rem 3rem;
+  box-shadow:
+    inset 0 0 100px rgba(80, 35, 0, .22),
+    inset 0 0  35px rgba(50, 18, 0, .14),
+    inset 0 0   0   1px rgba(100, 60, 10, .10);
+}
+
+/* ── Scroll title: "Rules" ── */
+.scroll-heading {
+  font-family: 'Cinzel Decorative', cursive;
+  font-size: 1.45rem; font-weight: 900;
+  color: var(--ink-deep);
+  letter-spacing: .32em;
+  text-align: center;
+  margin-bottom: 0;
+  /* No plain underline — the SVG flourish below replaces it */
+  text-shadow:
+    1px 1px 0 rgba(255, 230, 160, .22),
+    0   2px 4px rgba(0, 0, 0, .08);
+}
+
+/* ── Ornate SVG divider ── */
+.scroll-divider {
+  display: block;
+  width: 100%;
+  margin: 0.8rem 0 1.3rem;
+  text-align: center;
+  line-height: 0;
+}
+.scroll-divider svg {
+  width: 100%;
+  max-width: 340px;
+  display: inline-block;
+  overflow: visible;
+}
+
+/* ── Rules list ── */
+.rules-list {
+  list-style: none; padding: 0; margin: 0;
+  display: flex; flex-direction: column; gap: .2rem;
+  text-align: left;
+}
+
+.rules-list li {
+  font-size: clamp(.88rem, 1.8vw, 1rem);
+  color: var(--ink);
+  line-height: 2.0;
+  padding-left: 1.8rem;
+  position: relative;
+  padding-bottom: .4rem;
+}
+
+/* Brass/tarnished gold ornament bullet */
+.rules-list li::before {
+  content: '✦';
+  position: absolute; left: 0; top: .18rem;
+  color: var(--brass);
+  font-size: .68rem;
+  text-shadow: 0 1px 0 rgba(255, 220, 130, .45);
+}
+
+/* Rule header — displayed on its own line, all caps, slightly larger */
+.rules-list li .rule-header {
+  display: block;
+  font-family: 'Cinzel', serif;
+  font-size: 1.0em;
+  font-weight: 700;
+  color: var(--ink-deep);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  line-height: 1.7;
+}
+
+/* Rule description — sentence case, lighter weight, distinct body copy */
+.rules-list li .rule-desc {
+  display: block;
+  font-family: 'Cinzel', serif;
+  font-weight: 400;
+  color: var(--ink-mid);
+  font-size: 0.92em;
+  line-height: 1.95;
+}
+
+/* ── Title subtitle ── */
+.title-subtitle {
+  font-family: 'Cinzel', serif;
+  font-size: .75rem;
+  letter-spacing: .25em;
+  color: rgba(155, 221, 255, 0.55);
+  text-transform: uppercase;
+  font-weight: 400;
+  margin-bottom: 2.5rem;
+}
+
+/* ── Begin the Tournament button — restrained / transparent ── */
+.btn-begin {
+  font-family: 'Cinzel', serif;
+  font-size: .82rem;
+  font-weight: 400;
+  letter-spacing: .3em;
+  text-transform: uppercase;
+  padding: .85rem 3.5rem;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 2px;
+  cursor: pointer;
+  transition: background .25s, border-color .25s, color .25s;
+}
+.btn-begin:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 1);
+  color: #ffffff;
+}
+.btn-begin:active { opacity: .8; }
+
+/* ── Rules trigger link (fixed, bottom-right) ── */
+#rules-link {
+  position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 200;
+  font-family: 'Cinzel', serif;
+  font-size: .68rem; letter-spacing: .18em; text-transform: uppercase;
+  color: rgba(155, 221, 255, 0.38);
+  cursor: pointer;
+  transition: color .2s;
+  display: none; /* shown only on title screen via JS */
+}
+#rules-link:hover { color: rgba(155, 221, 255, 0.82); }
+
+/* ── Rules Modal ── */
+#rules-modal {
+  display: none; position: fixed; inset: 0; z-index: 600;
+  background: rgba(0, 4, 18, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  align-items: center; justify-content: center;
+  padding: 1.5rem;
+}
+#rules-modal.open { display: flex; }
+.rules-modal-box {
+  position: relative;
+  max-width: 580px; width: 100%;
+  background: rgba(2, 8, 28, 0.92);
+  border: 1px solid rgba(155, 221, 255, 0.2);
+  border-radius: 10px;
+  padding: 2.5rem 2.5rem 2rem;
+  max-height: 80vh; overflow-y: auto;
+}
+.rules-modal-close {
+  position: absolute; top: 1rem; right: 1.2rem;
+  font-size: 1.1rem; line-height: 1;
+  cursor: pointer; background: none; border: none;
+  color: rgba(155, 221, 255, 0.45);
+  transition: color .2s;
+}
+.rules-modal-close:hover { color: rgba(155, 221, 255, 0.9); }
+.rules-modal-heading {
+  font-family: 'Cinzel Decorative', cursive;
+  font-size: 1rem; font-weight: 700;
+  color: var(--ink-deep);
+  letter-spacing: .28em; text-align: center; text-transform: uppercase;
+  margin-bottom: 1.5rem;
+}
+
+/* ═══════════════════════════════════════════════════
+   QUESTION SCREEN
+═══════════════════════════════════════════════════ */
+#question-screen {
+  gap: 1.2rem;
+  background-image: url('downloads/confused-Ron.avif');
+  background-size: cover;
+  background-position: center;
+}
+#question-screen::after {
+  content: '';
+  position: fixed; inset: 0;
+  background: rgba(0, 0, 0, 0.58);
+  z-index: 0; pointer-events: none;
+}
+#question-screen > * { position: relative; z-index: 1; }
+
+.q-header {
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%; max-width: 900px; flex-wrap: wrap; gap: .5rem;
+}
+.q-label {
+  font-family: 'Cinzel Decorative', cursive;
+  font-size: .85rem; color: var(--gold); letter-spacing: .2em; text-transform: uppercase;
+}
+.diff-badge {
+  font-size: .72rem; font-weight: 700; padding: .22rem .8rem;
+  border-radius: 20px; letter-spacing: .12em; text-transform: uppercase;
+}
+.diff-badge.guess-who {
+  background: #1a1000;
+  color: #c9a84c;
+  border: 1px solid rgba(201,168,76,.5);
+}
+
+/* Rune Clock Timer */
+.timer-ring-wrap {
+  display: flex; flex-direction: column; align-items: center; gap: .3rem;
+}
+.rune-label {
+  font-size: .65rem; color: #9BDDFF; letter-spacing: .15em; text-transform: uppercase;
+}
+.rune-svg { overflow: visible; }
+.r-bg    { fill: none; stroke: rgba(255,255,255,.07); stroke-width: 6; }
+.r-track { fill: none; stroke-width: 6; stroke-linecap: round; transition: stroke-dashoffset 1s linear, stroke .8s; }
+.r-num   { font-family: 'Cinzel Decorative', cursive; font-size: 1.6rem; font-weight: 700; fill: #e8d5a3; text-anchor: middle; dominant-baseline: middle; }
+.r-sec   { font-size: .52rem; fill: #888; text-anchor: middle; dominant-baseline: middle; font-family: 'Cinzel', serif; }
+
+.r-tick    { stroke: rgba(201,168,76,.25); stroke-width: 1.5; }
+.r-tick-lg { stroke: rgba(201,168,76,.5);  stroke-width: 2; }
+
+/* Layout row: timer + mystery photo */
+.q-row {
+  display: flex; align-items: flex-start; gap: 1.5rem;
+  max-width: 900px; width: 100%;
+}
+.q-main { flex: 1; min-width: 0; }
+
+/* ── Mystery Photo ── */
+.mystery-photo-wrap {
+  display: flex; flex-direction: column; align-items: center; gap: .9rem;
+}
+.mystery-frame {
+  position: relative; width: 100%; max-width: 400px;
+  border-radius: 10px;
+  border: 3px solid rgba(201,168,76,.5);
+  box-shadow:
+    0 0 0 1px rgba(201,168,76,.2),
+    0 0 35px rgba(0,0,0,.85),
+    0 0 55px rgba(201,168,76,.18),
+    inset 0 1px 0 rgba(255,255,255,.06);
+  overflow: hidden;
+  background: rgba(0,0,0,.45);
+  backdrop-filter: blur(8px);
+  min-height: 240px;
+  display: flex; align-items: center; justify-content: center;
+}
+.mystery-photo {
+  width: 100%; max-height: 400px;
+  object-fit: cover; display: block;
+}
+.mystery-placeholder {
+  font-size: 5rem;
+  color: rgba(201,168,76,.25);
+  user-select: none; text-align: center;
+}
+.mystery-label {
+  font-family: 'Cinzel Decorative', cursive;
+  font-size: clamp(.9rem, 2.2vw, 1.2rem);
+  color: var(--gold);
+  text-shadow: 0 0 14px var(--gold-glow);
+  letter-spacing: .09em; text-align: center;
+}
+
+
+/* ═══════════════════════════════════════════════════
+   PARCHMENT QUESTION CARD
+═══════════════════════════════════════════════════ */
+.q-card {
+  max-width: 900px; width: 100%;
+  padding: 2rem 2.5rem;
+}
+#q-bonus-banner {
+  display: none;
+  font-family: 'Cinzel Decorative', cursive;
+  font-size: .78rem; font-weight: 700; letter-spacing: .3em;
+  text-transform: uppercase; color: #ffffff;
+  background: linear-gradient(135deg, #003087 0%, #0050cc 100%);
+  border: 1.5px solid #9BDDFF; border-radius: 6px;
+  padding: .4rem 1.2rem; text-align: center; margin-bottom: .9rem;
+  box-shadow: 0 0 14px rgba(155,221,255,.35), 0 0 30px rgba(0,90,200,.25);
+  animation: bonusPulse 2s ease-in-out infinite;
+}
+@keyframes bonusPulse {
+  0%, 100% { box-shadow: 0 0 14px rgba(155,221,255,.35), 0 0 30px rgba(0,90,200,.25); }
+  50%       { box-shadow: 0 0 28px rgba(155,221,255,.65), 0 0 55px rgba(0,90,200,.45); }
+}
+.q-type-tag {
+  font-size: .7rem; letter-spacing: .2em; text-transform: uppercase;
+  color: #7a5510; margin-bottom: .8rem; font-weight: 600;
+}
+.q-text {
+  font-size: clamp(1.05rem, 2.5vw, 1.4rem);
+  line-height: 1.7; color: #2e1d08; margin-bottom: 1.2rem; font-weight: 600;
+}
+.q-opts {
+  display: grid; grid-template-columns: 1fr 1fr; gap: .6rem;
+}
+.q-opt {
+  background: rgba(0,30,80,.12); border: 1px solid rgba(139,105,20,.3);
+  border-radius: 5px; padding: .7rem 1rem;
+  font-size: .88rem; color: #3d2608; line-height: 1.4; user-select: none;
+}
+.q-open-hint {
+  font-style: italic; font-size: .85rem; color: #7a5510;
+  padding: .8rem 1rem; background: rgba(139,105,20,.10);
+  border-radius: 5px; border-left: 3px solid rgba(139,105,20,.4);
+}
+
+/* ═══════════════════════════════════════════════════
+   PARCHMENT REVEAL CARD
+═══════════════════════════════════════════════════ */
+.reveal-card {
+  max-width: 900px; width: 100%;
+  padding: 2rem 2.5rem; position: relative;
+}
+.reveal-q-text {
+  font-size: clamp(.9rem, 1.8vw, 1.1rem);
+  color: #7a5510; margin-bottom: 1.2rem; line-height: 1.5; font-style: italic;
+}
+.answer-divider {
+  height: 1px; background: linear-gradient(90deg, transparent, rgba(139,105,20,.4), transparent);
+  margin-bottom: 1.2rem;
+}
+.answer-label {
+  font-size: .7rem; text-transform: uppercase; letter-spacing: .25em;
+  color: #7a5510; margin-bottom: .5rem; font-weight: 700;
+}
+.answer-text {
+  font-family: 'Cinzel Decorative', cursive;
+  font-size: clamp(1.1rem, 3vw, 1.8rem);
+  color: #2e1d08; line-height: 1.3; margin-bottom: 1rem;
+  animation: magicReveal 1s cubic-bezier(.2,.8,.3,1) both;
+}
+.answer-glow {
+  animation: glowFade .85s ease-out both;
+}
+@keyframes glowFade {
+  0%   { opacity: 1; }
+  100% { opacity: 0; }
+}
+.reveal-opts { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; margin-bottom: 1rem; }
+.reveal-opt {
+  background: rgba(139,105,20,.10); border: 1px solid rgba(139,105,20,.25);
+  border-radius: 5px; padding: .7rem 1rem;
+  font-size: .88rem; color: #3d2608; line-height: 1.4; transition: all .3s;
+}
+.reveal-opt.is-correct {
+  background: rgba(160,120,32,.20); border-color: #a07820;
+  color: #2e1d08; font-weight: 700;
+  box-shadow: 0 0 12px rgba(160,120,32,.30);
+}
+/* ═══════════════════════════════════════════════════
+   REVEAL SCREEN
+═══════════════════════════════════════════════════ */
+#reveal-screen {
+  gap: 1.2rem;
+  background-image: url('downloads/Harmione-Raising-Hand.avif');
+  background-size: cover;
+  background-position: center;
+}
+#reveal-screen::after {
+  content: '';
+  position: fixed; inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 0; pointer-events: none;
+}
+#reveal-screen > * { position: relative; z-index: 1; }
+
+/* ── Reveal Photo Section ── */
+.reveal-photo-section {
+  display: flex; flex-direction: column; align-items: center; gap: 1rem;
+  max-width: 520px; width: 90vw;
+  animation: riseUp .6s cubic-bezier(.3,1.3,.4,1) both;
+}
+.reveal-frame {
+  width: 100%;
+  border-radius: 10px;
+  border: 3px solid rgba(201,168,76,.75);
+  box-shadow:
+    0 0 0 1px rgba(201,168,76,.3),
+    0 0 45px rgba(201,168,76,.35),
+    0 0 90px rgba(201,168,76,.18),
+    inset 0 1px 0 rgba(255,255,255,.06);
+  overflow: hidden;
+  background: rgba(0,0,0,.4);
+  backdrop-filter: blur(8px);
+  min-height: 240px;
+  display: flex; align-items: center; justify-content: center;
+  animation: magicReveal 1s cubic-bezier(.2,.8,.3,1) both;
+}
+.reveal-photo {
+  width: 100%; max-height: 600px;
+  object-fit: contain; display: block;
+}
+.reveal-placeholder {
+  font-size: 5rem; color: rgba(201,168,76,.3);
+  user-select: none;
+}
+.reveal-name-text {
+  font-family: 'Cinzel Decorative', cursive;
+  font-size: clamp(1.8rem, 5vw, 3rem);
+  color: var(--gold);
+  text-shadow: 0 0 20px var(--gold-glow), 0 0 55px rgba(201,168,76,.3);
+  letter-spacing: .07em; text-align: center;
+  animation: magicReveal 1s .18s cubic-bezier(.2,.8,.3,1) both;
+}
+
+@keyframes magicReveal {
+  0%   { opacity: 0; transform: scale(.85); filter: blur(8px); }
+  35%  { opacity: 1; transform: scale(1.04); filter: blur(0); color: #a07820; }
+  65%  { transform: scale(.99); }
+  100% { transform: scale(1); color: #2e1d08; }
+}
+@keyframes riseUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── HOUSE SELECTOR ── */
+.house-select-wrap {
+  max-width: 900px; width: 100%;
+  animation: riseUp .7s .3s cubic-bezier(.3,1.3,.4,1) both;
+}
+.hs-prompt {
+  font-family: 'Cinzel Decorative', cursive;
+  font-size: clamp(.85rem, 2vw, 1.1rem);
+  color: var(--gold); text-align: center;
+  margin-bottom: .9rem; letter-spacing: .08em;
+  text-shadow: 0 0 12px var(--gold-glow);
+}
+
+/* ── HOUSE BUTTONS — full-bleed banner cards ── */
+.house-btns {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.hbtn {
+  position: relative; overflow: hidden; padding: 0;
+  border-radius: 14px; border: 2px solid transparent;
+  cursor: pointer; transition: transform 0.25s, box-shadow 0.25s;
+  aspect-ratio: 2 / 3; width: 100%; min-height: 180px;
+}
+
+/* Full-bleed flag image */
+.hbtn .hbtn-img {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; object-position: center top; display: block;
+}
+
+/* Bottom caption overlay */
+.hbtn .hbtn-caption {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: linear-gradient(to top, rgba(0,0,0,.82) 0%, rgba(0,0,0,.4) 60%, transparent 100%);
+  padding: 0.6rem 0.5rem 0.55rem;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+}
+
+.hbtn .h-name {
+  font-family: 'Cinzel Decorative', cursive;
+  font-size: clamp(0.65rem, 1.4vw, 0.82rem);
+  font-weight: 700; letter-spacing: 0.1em;
+  display: block;
+}
+.hbtn .h-pts {
+  font-size: 0.65rem; color: rgba(255,255,255,.65);
+  display: block;
+}
+
+/* Per-house name colors */
+.hbtn.geffendor   .h-name { color: #D3A625; }
+.hbtn.sliontherin .h-name { color: #BEBEBE; }
+.hbtn.harlempuff  .h-name { color: #E8D44D; }
+.hbtn.kravenclaw  .h-name { color: #946B2D; }
+
+/* Hover lift on non-selected */
+.hbtn:not(.selected):hover {
+  transform: translateY(-5px) scale(1.03);
+}
+.hbtn.geffendor:not(.selected):hover   { box-shadow: 0 0 14px rgba(211,166,37,.4),   0 8px 24px rgba(0,0,0,.5); border-color: rgba(211,166,37,.4); }
+.hbtn.sliontherin:not(.selected):hover { box-shadow: 0 0 14px rgba(190,190,190,.4),  0 8px 24px rgba(0,0,0,.5); border-color: rgba(190,190,190,.4); }
+.hbtn.harlempuff:not(.selected):hover  { box-shadow: 0 0 14px rgba(232,212,77,.4),   0 8px 24px rgba(0,0,0,.5); border-color: rgba(232,212,77,.4); }
+.hbtn.kravenclaw:not(.selected):hover  { box-shadow: 0 0 14px rgba(148,107,45,.4),   0 8px 24px rgba(0,0,0,.5); border-color: rgba(148,107,45,.4); }
+
+/* Selected state — lift + per-house glow pulse */
+.hbtn.selected { transform: translateY(-4px) scale(1.06); }
+
+.hbtn.geffendor.selected  { animation: glowGeffendor  1.8s ease-in-out infinite; }
+.hbtn.sliontherin.selected { animation: glowSliontherin 1.8s ease-in-out infinite; }
+.hbtn.harlempuff.selected  { animation: glowHarlempuff  1.8s ease-in-out infinite; }
+.hbtn.kravenclaw.selected  { animation: glowKravenclaw  1.8s ease-in-out infinite; }
+
+/* Per-house glow keyframes */
+@keyframes glowGeffendor {
+  0%, 100% { box-shadow: 0 0 14px rgba(211,166,37,.6),  0 0 28px rgba(180,20,20,.4),   inset 0 0 18px rgba(211,166,37,.1);  border-color: #D3A625; transform: translateY(-4px) scale(1.06); }
+  50%       { box-shadow: 0 0 28px rgba(211,166,37,.95), 0 0 55px rgba(200,30,30,.65),  inset 0 0 30px rgba(211,166,37,.18); border-color: #f5c842; transform: translateY(-4px) scale(1.06); }
+}
+@keyframes glowSliontherin {
+  0%, 100% { box-shadow: 0 0 14px rgba(26,71,42,.7),    0 0 28px rgba(190,190,190,.35), inset 0 0 18px rgba(0,180,80,.08);   border-color: #BEBEBE; transform: translateY(-4px) scale(1.06); }
+  50%       { box-shadow: 0 0 28px rgba(40,180,90,.6),   0 0 55px rgba(190,190,190,.55), inset 0 0 30px rgba(0,200,80,.14);  border-color: #e0e0e0; transform: translateY(-4px) scale(1.06); }
+}
+@keyframes glowHarlempuff {
+  0%, 100% { box-shadow: 0 0 14px rgba(232,212,77,.6),  0 0 28px rgba(30,20,0,.5),      inset 0 0 18px rgba(232,212,77,.1);  border-color: #E8D44D; transform: translateY(-4px) scale(1.06); }
+  50%       { box-shadow: 0 0 28px rgba(232,212,77,.95), 0 0 55px rgba(255,230,80,.5),   inset 0 0 30px rgba(232,212,77,.18); border-color: #fff07a; transform: translateY(-4px) scale(1.06); }
+}
+@keyframes glowKravenclaw {
+  0%, 100% { box-shadow: 0 0 14px rgba(13,24,64,.8),    0 0 28px rgba(148,107,45,.5),   inset 0 0 18px rgba(148,107,45,.08); border-color: #946B2D; transform: translateY(-4px) scale(1.06); }
+  50%       { box-shadow: 0 0 28px rgba(30,60,160,.6),   0 0 55px rgba(148,107,45,.7),   inset 0 0 30px rgba(148,107,45,.15); border-color: #c49040; transform: translateY(-4px) scale(1.06); }
+}
+
+.confirm-row { display: flex; justify-content: center; gap: 1rem; align-items: center; }
+.no-correct { font-size: .8rem; color: rgba(155,221,255,.45); font-style: italic; cursor: pointer; text-decoration: underline; transition: color .2s; }
+.no-correct:hover { color: rgba(155,221,255,.8); }
+
+/* ═══════════════════════════════════════════════════
+   SCOREBOARD SCREEN
+═══════════════════════════════════════════════════ */
+#scoreboard-screen {
+  gap: 1.5rem;
+  text-align: center;
+  background-image: url('downloads/Harmione-Raising-Hand.avif');
+  background-size: cover;
+  background-position: center;
+}
+#scoreboard-screen::after {
+  content: '';
+  position: fixed; inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 0; pointer-events: none;
+}
+#scoreboard-screen > * { position: relative; z-index: 1; }
+
+.sb-title {
+  font-family: 'Cinzel Decorative', cursive;
+  font-size: clamp(1.6rem, 4vw, 2.8rem);
+  color: var(--gold); text-shadow: 0 0 20px var(--gold-glow);
+}
+.sb-subtitle { font-size: .85rem; color: rgba(155,221,255,.55); letter-spacing: .2em; text-transform: uppercase; }
+
+/* Bar Chart */
+.bar-chart {
+  width: 100%; max-width: 640px;
+  display: flex; flex-direction: column; gap: 1.4rem;
+}
+.bar-row { display: flex; align-items: center; gap: .9rem; }
+.bar-row.leader {
+  background: rgba(201,168,76,.06);
+  border-left: 3px solid rgba(201,168,76,.45);
+  padding-left: .5rem; border-radius: 0 6px 6px 0;
+}
+.bar-label {
+  font-family: 'Cinzel Decorative', cursive;
+  font-size: .78rem; font-weight: 700; letter-spacing: .04em;
+  width: 150px; flex-shrink: 0; text-align: right; white-space: nowrap;
+}
+.bar-label img {
+  width: 24px; height: 32px; object-fit: cover;
+  border-radius: 3px; vertical-align: middle;
+  margin-right: 6px; display: inline-block;
+}
+.bar-row.leader .bar-label::after { content: ' ★'; }
+.bar-track {
+  flex: 1; height: 36px; border-radius: 8px;
+  background: rgba(255,255,255,.07);
+  overflow: hidden; position: relative;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+}
+.bar-fill {
+  height: 100%; border-radius: 8px; width: 0%;
+  transition: width .85s cubic-bezier(.2,.8,.3,1); position: relative;
+}
+.bar-fill::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent 60%, rgba(255,255,255,.18));
+  border-radius: 6px;
+}
+.bar-pts {
+  font-family: 'Cinzel Decorative', cursive;
+  font-size: .9rem; font-weight: 700;
+  width: 70px; flex-shrink: 0; text-align: left;
+}
+.bar-new-pts {
+  font-size: .72rem; color: #e8d5a3;
+  animation: popIn .4s cubic-bezier(.3,1.5,.4,1) both;
+  display: inline-block; margin-left: .2rem;
+}
+.pts-awarded-tag {
+  font-size: .75rem; color: #e8d5a3;
+  animation: popIn .4s cubic-bezier(.3,1.5,.4,1) both;
+  text-align: center; font-weight: 700;
+}
+@keyframes popIn {
+  from { opacity: 0; transform: scale(.5); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.sb-next-row { display: flex; flex-direction: column; align-items: center; gap: .6rem; }
+.sb-q-progress { font-size: .78rem; color: rgba(155,221,255,.45); letter-spacing: .15em; }
+
+/* ═══════════════════════════════════════════════════
+   FINAL SCREEN
+═══════════════════════════════════════════════════ */
+#final-screen {
+  gap: 1.5rem; text-align: center;
+  background-size: cover; background-position: center; background-repeat: no-repeat;
+}
+#final-screen::after {
+  content: ''; position: fixed; inset: 0;
+  background: rgba(0, 0, 0, 0.50);
+  z-index: 0; pointer-events: none;
+}
+#final-screen > * { position: relative; z-index: 1; }
+
+.loser-banner {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(1rem, 2.6vw, 1.4rem); font-weight: 700;
+  padding: 1rem 2rem; border-radius: 10px;
+  border: 2px solid #8b1a00; background: rgba(80, 10, 0, 0.55);
+  color: #ffb347; max-width: 700px; width: 100%; letter-spacing: .04em;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+  animation: loserPulse 2.2s ease-in-out infinite;
+}
+@keyframes loserPulse {
+  0%,100% { box-shadow: 0 0 14px rgba(200,60,0,.5);  text-shadow: 0 0 8px rgba(255,120,0,.5); }
+  50%      { box-shadow: 0 0 32px rgba(200,60,0,.85), 0 0 60px rgba(180,40,0,.35); text-shadow: 0 0 18px rgba(255,140,0,.9); }
+}
+
+.final-title {
+  font-family: 'Cinzel Decorative', cursive;
+  font-size: clamp(2rem, 6vw, 4rem);
+  color: var(--gold);
+  text-shadow: 0 0 30px var(--gold-glow), 0 0 70px rgba(201,168,76,.2);
+  animation: titlePulse 3s ease-in-out infinite;
+}
+@keyframes titlePulse {
+  0%,100% { text-shadow: 0 0 30px var(--gold-glow); }
+  50%      { text-shadow: 0 0 50px var(--gold-glow), 0 0 90px rgba(201,168,76,.3); }
+}
+
+.winner-banner {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(1.1rem, 3vw, 1.7rem);
+  padding: 1rem 2rem; border-radius: 10px; border: 2px solid;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+  animation: winnerGlow 2s ease-in-out infinite;
+}
+@keyframes winnerGlow {
+  0%,100% { box-shadow: 0 0 15px currentColor; }
+  50%      { box-shadow: 0 0 35px currentColor, 0 0 60px currentColor; }
+}
+.winner-banner.geffendor  { color: var(--g-gold);   border-color: var(--g-gold);   background: rgba(122,0,1,.3); }
+.winner-banner.sliontherin { color: var(--s-silver); border-color: var(--s-silver); background: rgba(26,71,42,.3); }
+.winner-banner.harlempuff { color: var(--h-yellow);  border-color: var(--h-yellow); background: rgba(46,38,0,.3); }
+.winner-banner.kravenclaw  { color: var(--r-bronze);  border-color: var(--r-bronze); background: rgba(13,24,64,.3); }
+
+#winner-flag {
+  width: 160px; height: 200px; object-fit: cover;
+  border-radius: 10px; border: 3px solid currentColor;
+  box-shadow: 0 0 30px rgba(0,0,0,.6);
+  display: block; margin: 0 auto;
+}
+
+.final-ranking {
+  display: flex; flex-direction: column; gap: .7rem;
+  max-width: 460px; width: 100%;
+}
+.rank-row {
+  display: flex; align-items: center; gap: 1rem;
+  padding: .8rem 1.2rem; border-radius: 10px; border: 2px solid transparent;
+  position: relative; overflow: hidden;
+}
+.rank-row.rank-1 {
+  animation: rankPulse 2.5s infinite;
+  box-shadow: 0 0 24px rgba(255,215,0,.4), inset 0 1px 0 rgba(255,255,255,.08);
+}
+@keyframes rankPulse {
+  0%,100% { box-shadow: 0 0 18px rgba(255,215,0,.35), inset 0 1px 0 rgba(255,255,255,.08); }
+  50%      { box-shadow: 0 0 42px rgba(255,215,0,.75), 0 0 80px rgba(201,168,76,.25), inset 0 1px 0 rgba(255,255,255,.08); }
+}
+.rank-row.rank-1::before {
+  content: '';
+  position: absolute; top: 0; left: -120%; width: 60%; height: 100%;
+  background: linear-gradient(105deg, transparent 0%, rgba(255,220,80,.18) 45%, rgba(255,240,140,.32) 55%, transparent 100%);
+  animation: rankShimmer 2.8s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes rankShimmer {
+  0%   { left: -120%; }
+  55%  { left: -120%; }
+  100% { left: 160%; }
+}
+.rank-row.geffendor  { background: rgba(122,0,1,.3);  border-color: rgba(211,166,37,.4); }
+.rank-row.sliontherin { background: rgba(26,71,42,.3); border-color: rgba(190,190,190,.35); }
+.rank-row.harlempuff { background: rgba(46,38,0,.3);   border-color: rgba(232,212,77,.4); }
+.rank-row.kravenclaw  { background: rgba(13,24,64,.3);  border-color: rgba(148,107,45,.4); }
+.rank-row.rank-1     { border-color: gold; }
+.rank-medal { font-size: 1.5rem; min-width: 2rem; text-align: center; }
+.rank-icon  { font-size: 1.8rem; }
+.rank-info  { flex: 1; text-align: left; }
+.rank-name  { font-family: 'Cinzel Decorative', cursive; font-size: .85rem; }
+.rank-row.geffendor  .rank-name { color: var(--g-gold); }
+.rank-row.sliontherin .rank-name { color: var(--s-silver); }
+.rank-row.harlempuff .rank-name { color: var(--h-yellow); }
+.rank-row.kravenclaw  .rank-name { color: var(--r-bronze); }
+.rank-pts { font-family: 'Cinzel Decorative', cursive; font-size: 1.4rem; }
+.rank-row.geffendor  .rank-pts { color: var(--g-gold); }
+.rank-row.sliontherin .rank-pts { color: var(--s-silver); }
+.rank-row.harlempuff .rank-pts { color: var(--h-yellow); }
+.rank-row.kravenclaw  .rank-pts { color: var(--r-bronze); }
+
+/* ═══════════════════════════════════════════════════
+   FLASH REVEAL OVERLAY
+═══════════════════════════════════════════════════ */
+#flash {
+  display: none; position: fixed; inset: 0; z-index: 500;
+  background: radial-gradient(ellipse at center, rgba(255,220,80,.65) 0%, rgba(255,140,0,.4) 40%, transparent 70%);
+  pointer-events: none;
+  animation: flashOut .85s ease-out both;
+}
+#flash.active { display: block; }
+@keyframes flashOut {
+  0%   { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* ═══════════════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════════════ */
+@media (max-width: 700px) {
+  .house-btns { grid-template-columns: repeat(2, 1fr); }
+  .q-row      { flex-direction: column; align-items: center; }
+  .bar-label  { width: 110px; font-size: .7rem; }
+  .mystery-frame { min-height: 180px; }
+  .reveal-frame  { min-height: 200px; }
+  .scroll-body   { padding: 1.8rem 1.8rem 2.2rem; }
+}
+@media (max-width: 420px) {
+  .house-btns { grid-template-columns: repeat(2, 1fr); }
+  .bar-label  { width: 90px; font-size: .65rem; }
+}
+
+/* ═══════════════════════════════════════════════════
+   MUTE BUTTON
+═══════════════════════════════════════════════════ */
+#mute-btn {
+  position: fixed; top: 1rem; right: 1rem; z-index: 1000;
+  width: 44px; height: 44px; border-radius: 50%;
+  background: rgba(0,0,0,.5); border: 1px solid rgba(155,221,255,.35);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.25rem; cursor: pointer; transition: all .25s;
+  backdrop-filter: blur(6px); user-select: none;
+  box-shadow: 0 2px 10px rgba(0,0,0,.4);
+}
+#mute-btn:hover {
+  background: rgba(0,0,0,.7); border-color: rgba(155,221,255,.7);
+  box-shadow: 0 0 14px rgba(155,221,255,.35);
+}
+
+/* ═══════════════════════════════════════════════════
+   CENTERING — explicit overrides for isolated buttons
+═══════════════════════════════════════════════════ */
+#final-screen { align-items: center; }
+
+/* ═══════════════════════════════════════════════════
+   RULES WRAP (.cinematic-rules-wrap)
+═══════════════════════════════════════════════════ */
+.cinematic-rules-wrap {
+  background: rgba(0, 6, 25, 0.72);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(155, 221, 255, 0.18);
+  border-radius: 10px;
+  padding: 1.6rem 2rem 1.8rem;
+  max-width: 620px;
+  width: 100%;
+  box-shadow: 0 8px 32px rgba(0,0,0,.55);
+}
+.cinematic-rules-wrap .rules-list li          { color: rgba(155, 221, 255, 0.85); }
+.cinematic-rules-wrap .rule-header            { color: #e8f6ff; }
+.cinematic-rules-wrap .rule-desc              { color: rgba(155, 221, 255, 0.65); }
+.cinematic-rules-wrap .rules-list li::before  { color: #c9a84c; }
+
+/* ═══════════════════════════════════════════════════
+   REVEAL ANSWER BUTTON (.btn-skip) — transparent pill
+═══════════════════════════════════════════════════ */
+.btn-skip {
+  font-family: 'Cinzel', serif;
+  font-size: .78rem;
+  font-weight: 600;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  padding: .55rem 1.6rem;
+  background: transparent;
+  color: rgba(232, 213, 163, 0.75);
+  border: 1px solid rgba(201, 168, 76, 0.45);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all .25s;
+  align-self: center;
+}
+.btn-skip:hover {
+  background: rgba(201, 168, 76, 0.10);
+  color: #e8d5a3;
+  border-color: rgba(201, 168, 76, 0.75);
+}
+.btn-skip:active { opacity: .7; }
+
+/* glowing ready-state after timer hits 0 */
+.btn-skip-ready {
+  color: #e8d5a3 !important;
+  border-color: rgba(201, 168, 76, 0.9) !important;
+  animation: skipPulse 1.2s ease-in-out infinite;
+}
+@keyframes skipPulse {
+  0%, 100% { box-shadow: none; }
+  50%       { box-shadow: 0 0 16px rgba(201, 168, 76, 0.5); }
+}
+
+#personal-pending {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  text-align: center;
+  width: 100%;
+  margin-top: 0.4rem;
+}
+.personal-ask-prompt {
+  text-align: center;
+  width: 100%;
+  display: block;
+}
+
+/* ═══════════════════════════════════════════════════
+   REVISE BUTTON (.btn-revise)
+═══════════════════════════════════════════════════ */
+.btn-revise {
+  font-family: 'Cinzel', serif;
+  font-size: .72rem;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  color: rgba(155, 221, 255, 0.45);
+  cursor: pointer;
+  text-decoration: underline;
+  transition: color .2s;
+}
+.btn-revise:hover { color: rgba(155, 221, 255, 0.85); }
+
+/* ═══════════════════════════════════════════════════
+   BIRTHDAY SCREEN
+═══════════════════════════════════════════════════ */
+#birthday-screen {
+  background-image: url('happybday.jpg');
+  background-size: cover;
+  background-position: center;
+  position: relative;
+}
+#birthday-screen::before {
+  content: '';
+  position: absolute; inset: 0; z-index: 0;
+  background: rgba(0, 0, 0, 0.42);
+}
+#birthday-screen > * { position: relative; z-index: 1; }
+
+.bday-text {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  flex: 1; width: 100%;
+}
+
+/* Burnished gold — no neon glow, no animation */
+.bday-line {
+  font-family: 'Cinzel Decorative', cursive;
+  font-size: clamp(3rem, 10vw, 7.5rem);
+  font-weight: 900;
+  text-align: center;
+  line-height: 1.2;
+  letter-spacing: .06em;
+  color: #e8c96a;
+  text-shadow:
+    -1px -1px 0   rgba(255, 248, 190, 0.85),
+     2px  2px 0   rgba(60, 25, 0, 0.95),
+     4px  4px 5px rgba(30, 10, 0, 0.60),
+     1px  0   0   rgba(220, 170, 50, 0.30),
+    -1px  1px 0   rgba(80, 35, 2, 0.40);
+}
+  </style>
+</head>
+<body>
+
+<!-- ── BACKGROUND ── -->
+<div id="bg-layer"></div>
+<div id="stars"></div>
+<div id="particles"></div>
+
+<!-- ── BACKGROUND MUSIC ── -->
+<audio id="bgMusic" loop>
+  <source src="Reunion_of_Friends_4.mp3" type="audio/mpeg">
+</audio>
+
+<!-- ── REVEAL FLASH ── -->
+<div id="flash"></div>
+
+<!-- ── MUTE BUTTON (always visible) ── -->
+<div id="mute-btn" onclick="toggleMute()" title="Toggle Music">🔊</div>
+
+<!-- ══════════════════════════════════════════
+     TITLE SCREEN
+══════════════════════════════════════════ -->
+<div id="title-screen" class="screen active">
+
+  <!-- Blue-white magic dust particles (title screen only) -->
+  <div id="title-dust"></div>
+
+  <h1 class="tournament-title">Quadwizard<br>Tournament</h1>
+
+  <p class="title-subtitle">Quadwizard Tournament&nbsp;·&nbsp;12 Questions&nbsp;·&nbsp;Personal Trivia</p>
+
+  <button class="btn-begin" onclick="startQuiz()">Begin the Tournament</button>
+
+  <div class="cinematic-rules-wrap" style="margin-top: 2rem;">
+    <div class="rules-modal-heading">Rules</div>
+    <ul class="rules-list">
+      <li>
+        <span class="rule-header">12 Questions</span>
+        <span class="rule-desc">11 personal questions about your classmates, plus one bonus photo round.</span>
+      </li>
+      <li>
+        <span class="rule-header">10-Second Limit</span>
+        <span class="rule-desc">The clock is ticking — you have 10 seconds per question.</span>
+      </li>
+      <li>
+        <span class="rule-header">Points</span>
+        <span class="rule-desc">Personal questions are worth 10 points each. The final bonus question is worth 30 points.</span>
+      </li>
+      <li>
+        <span class="rule-header">Personal Questions</span>
+        <span class="rule-desc">The named classmate reveals the answer live after the timer ends!</span>
+      </li>
+      <li>
+        <span class="rule-header">Winner's Pour</span>
+        <span class="rule-desc">If your House gets a question right, add any liquid to the community cup.</span>
+      </li>
+      <li>
+        <span class="rule-header">The Loser's Gulp</span>
+        <span class="rule-desc">After all rounds, the House with the lowest score must drink the entire cup.</span>
+      </li>
+    </ul>
+  </div>
+
+</div>
+
+<!-- ── RULES LINK (fixed, bottom-right, visible only on title screen) ── -->
+<div id="rules-link" onclick="openRules()">Rules ↗</div>
+
+<!-- ── RULES MODAL ── -->
+<div id="rules-modal" onclick="if(event.target===this)closeRules()">
+  <div class="rules-modal-box">
+    <button class="rules-modal-close" onclick="closeRules()">✕</button>
+    <div class="rules-modal-heading">Rules</div>
+    <ul class="rules-list" style="color:#9BDDFF;">
+      <li>
+        <span class="rule-header">12 Questions</span>
+        <span class="rule-desc">11 personal questions about your classmates, plus one bonus photo round.</span>
+      </li>
+      <li>
+        <span class="rule-header">10-Second Limit</span>
+        <span class="rule-desc">The clock is ticking — you have 10 seconds per question.</span>
+      </li>
+      <li>
+        <span class="rule-header">Points</span>
+        <span class="rule-desc">Personal questions are worth 10 points each. The final bonus question is worth 30 points.</span>
+      </li>
+      <li>
+        <span class="rule-header">Personal Questions</span>
+        <span class="rule-desc">The named classmate reveals the answer live after the timer ends!</span>
+      </li>
+      <li>
+        <span class="rule-header">Winner's Pour</span>
+        <span class="rule-desc">If your House gets a question right, add any liquid to the community cup.</span>
+      </li>
+      <li>
+        <span class="rule-header">The Loser's Gulp</span>
+        <span class="rule-desc">After all rounds, the House with the lowest score must drink the entire cup.</span>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     QUESTION SCREEN
+══════════════════════════════════════════ -->
+<div id="question-screen" class="screen">
+  <div class="q-header">
+    <div class="q-label" id="q-label">Question 1 of 12</div>
+    <div class="diff-badge easy" id="q-diff">Easy</div>
+  </div>
+
+  <div class="q-row">
+    <!-- Rune Clock Timer -->
+    <div class="timer-ring-wrap">
+      <svg class="rune-svg" id="rune-svg" width="120" height="120" viewBox="0 0 120 120">
+        <g id="rune-ticks"></g>
+        <circle class="r-bg" cx="60" cy="60" r="50"/>
+        <g transform="rotate(-90 60 60)">
+          <circle class="r-track" id="r-track" cx="60" cy="60" r="50"
+            stroke-dasharray="314.16" stroke-dashoffset="0" stroke="#00cc55"/>
+        </g>
+        <text class="r-num" id="r-num" x="60" y="56">20</text>
+        <text class="r-sec"            x="60" y="72">seconds</text>
+        <circle cx="60" cy="60" r="40" fill="none" stroke="rgba(155,221,255,.12)" stroke-width="1"/>
+      </svg>
+      <div class="rune-label">Reading Time</div>
+    </div>
+
+    <!-- Question Card -->
+    <div class="q-main">
+      <div class="parchment q-card">
+        <div id="q-bonus-banner">⭐ Bonus Round — 30 Points ⭐</div>
+        <div class="q-type-tag" id="q-type-tag">Open Answer</div>
+        <div class="q-text" id="q-text">Loading...</div>
+        <div class="q-opts" id="q-opts" style="display:none"></div>
+        <div class="q-open-hint" id="q-open-hint" style="display:none">
+          ✍️ Teams write their answer — it will be revealed when the timer ends.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn-skip" onclick="clearInterval(timerID); revealAnswer()">Reveal Answer →</button>
+</div>
+
+<!-- ══════════════════════════════════════════
+     REVEAL SCREEN
+══════════════════════════════════════════ -->
+<div id="reveal-screen" class="screen">
+  <!-- Answer card -->
+  <div class="parchment reveal-card" style="max-width:900px;width:100%;margin-bottom:1rem;position:relative;">
+    <div id="answer-glow" class="answer-glow"></div>
+    <div class="q-type-tag" id="rv-type-tag">Open Answer</div>
+    <div class="reveal-q-text" id="rv-q-text">Question text</div>
+    <div class="reveal-opts" id="rv-opts" style="display:none"></div>
+    <!-- Answer block (hidden for personal until host clicks Reveal) -->
+    <div id="answer-block">
+      <div class="reveal-divider"></div>
+      <div class="answer-label">✦ Correct Answer ✦</div>
+      <div class="answer-text"  id="rv-answer">Answer</div>
+      <div class="explanation-box" id="rv-explanation">Explanation text</div>
+    </div>
+  </div>
+
+  <!-- Personal question pending reveal -->
+  <div id="personal-pending" style="display:none;">
+    <div class="personal-ask-prompt" id="personal-prompt">
+      Please ask <strong>them</strong> to reveal the answer!
+    </div>
+    <button class="btn btn-reveal-live" onclick="showPersonalAnswer()">✨ Reveal Answer</button>
+  </div>
+
+  <!-- House selector -->
+  <div class="house-select-wrap" id="house-select-wrap">
+    <div class="hs-prompt">✦ Which Houses Answered Correctly? ✦</div>
+    <div class="house-btns">
+
+      <div class="hbtn geffendor" onclick="toggleHouse('geffendor')" id="hb-geffendor">
+        <img class="hbtn-img" src="geffendor-bg.jpg" alt="Geffendor">
+        <div class="hbtn-caption">
+          <span class="h-name">Geffendor</span>
+          <span class="h-pts" id="hbpts-geffendor">0 pts</span>
+        </div>
+      </div>
+
+      <div class="hbtn sliontherin" onclick="toggleHouse('sliontherin')" id="hb-sliontherin">
+        <img class="hbtn-img" src="sliontherin-bg.jpg" alt="Sliontherin">
+        <div class="hbtn-caption">
+          <span class="h-name">Sliontherin</span>
+          <span class="h-pts" id="hbpts-sliontherin">0 pts</span>
+        </div>
+      </div>
+
+      <div class="hbtn harlempuff" onclick="toggleHouse('harlempuff')" id="hb-harlempuff">
+        <img class="hbtn-img" src="harlempuff-bg.jpg" alt="Harlempuff">
+        <div class="hbtn-caption">
+          <span class="h-name">Harlempuff</span>
+          <span class="h-pts" id="hbpts-harlempuff">0 pts</span>
+        </div>
+      </div>
+
+      <div class="hbtn kravenclaw" onclick="toggleHouse('kravenclaw')" id="hb-kravenclaw">
+        <img class="hbtn-img" src="kravenclaw-bg.jpg" alt="Kravenclaw">
+        <div class="hbtn-caption">
+          <span class="h-name">Kravenclaw</span>
+          <span class="h-pts" id="hbpts-kravenclaw">0 pts</span>
+        </div>
+      </div>
+
+    </div>
+    <div class="confirm-row">
+      <button class="btn btn-confirm" onclick="confirmScores()">✦ Confirm &amp; Award Points ✦</button>
+      <span class="no-correct" onclick="confirmScores()">No houses correct</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCOREBOARD SCREEN
+══════════════════════════════════════════ -->
+<div id="scoreboard-screen" class="screen">
+  <div class="sb-title">House Standings</div>
+  <div class="sb-subtitle">After Question <span id="sb-q-num">1</span> of 12</div>
+
+  <div id="pts-awarded-row" style="display:flex;gap:.8rem;justify-content:center;flex-wrap:wrap;min-height:1.8rem;"></div>
+
+  <div id="hourglasses" style="display:flex;justify-content:center;width:100%;padding:0 1rem;"></div>
+
+  <div class="sb-next-row">
+    <div class="sb-q-progress" id="sb-q-progress"></div>
+    <button class="btn btn-next" id="btn-next" onclick="nextQuestion()">Next Question →</button>
+    <span class="btn-revise" onclick="goBackToReveal()">← Revise</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     FINAL SCREEN
+══════════════════════════════════════════ -->
+<div id="final-screen" class="screen">
+  <div class="final-title">✨ Quiz Complete! ✨</div>
+  <div class="winner-banner" id="winner-banner">🦁 Geffendor Wins!</div>
+  <div class="final-ranking" id="final-ranking"></div>
+  <div class="loser-banner" id="loser-banner"></div>
+  <button class="btn" onclick="resetQuiz()" style="margin-top:.5rem">🔮 Play Again</button>
+</div>
+
+<!-- ══════════════════════════════════════════
+     BIRTHDAY SCREEN
+══════════════════════════════════════════ -->
+<div id="birthday-screen" class="screen">
+  <div class="bday-text">
+    <div class="bday-line">It's their</div>
+    <div class="bday-line">Birthday!!!</div>
+    <div class="bday-line">🎂 Happy Birthday! 🎂</div>
+  </div>
+  <button class="btn btn-next" onclick="birthdayBackToGame()" style="margin-bottom:2rem;">Back to the Game</button>
+</div>
+
+<!-- ══════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════ -->
+<script>
+/* ════════════════════════════════════════
+   QUESTIONS  (11 Personal + 1 Bonus Photo)
+════════════════════════════════════════ */
+const QUESTIONS = [
+  /* Q1 — Personal: Connie */
+  { text:"What is the content of Connie's most popular TikTok?",
+    type:"personal", category:"personal", name:"Connie",
+    answer:"", explanation:""
+  },
+  /* Q2 — Personal: Sylvia */
+  { text:"How many followers does Sylvia have? (In thousands) 📱",
+    type:"personal", category:"personal", name:"Sylvia",
+    answer:"", explanation:""
+  },
+  /* Q3 — Personal: Kai */
+  { text:"What college club was Kai the president of? 🎓",
+    type:"personal", category:"personal", name:"Kai",
+    answer:"", explanation:""
+  },
+  /* Q4 — Personal: Bill */
+  { text:"Where did Bill's nickname \"Peng Peng\" come from? 🤔",
+    type:"personal", category:"personal", name:"Bill",
+    answer:"", explanation:""
+  },
+  /* Q5 — Personal: Richard */
+  { text:"What kind of social media account did Richard run before? 🎥",
+    type:"personal", category:"personal", name:"Richard",
+    answer:"", explanation:""
+  },
+  /* Q6 — Personal: Serena */
+  { text:"What is Serena's go-to song to sing at KTV? 🎤",
+    type:"personal", category:"personal", name:"Serena",
+    answer:"", explanation:""
+  },
+  /* Q7 — Personal: Bonnie Huang */
+  { text:"Who looks the most like Bonnie at CBS? 👯‍♀️",
+    type:"personal", category:"personal", name:"Bonnie Huang",
+    answer:"", explanation:""
+  },
+  /* Q8 — Personal: Cindy Chiang */
+  { text:"What is Cindy's total GPA? 🤓",
+    type:"personal", category:"personal", name:"Cindy Chiang",
+    answer:"", explanation:""
+  },
+  /* Q9 — Personal: William */
+  { text:"How many years has William been playing tennis? 🎾",
+    type:"personal", category:"personal", name:"William",
+    answer:"", explanation:""
+  },
+  /* Q10 — Personal: Emily */
+  { text:"What is Emily's type in guys? 👀",
+    type:"personal", category:"personal", name:"Emily",
+    answer:"", explanation:""
+  },
+  /* Q11 — Personal: Monica Lo */
+  { text:"How many times has Monica been on the dean's list in her entire life?",
+    type:"personal", category:"personal", name:"Monica Lo",
+    answer:"", explanation:""
+  },
+  /* Q12 — Bonus: Photo Question (30 pts) */
+  { text:"What do these three girls have in common? 🎉",
+    type:"photo", category:"bonus", name:"Bonus",
+    timer:15,
+    answer:"It's their birthday month! 🎂",
+    explanation:"Bethany, Monica, and Alena all share the same birthday month — happy birthday to all three! 🥳",
+    photos:["Bethany_bday.png","Monica_bday.PNG","Alena_bday.jpg"],
+    names:["Bethany","Monica","Alena"]
+  }
+];
+
+/* ════════════════════════════════════════
+   STATE
+════════════════════════════════════════ */
+const PTS  = { cbs:20, personal:10, bonus:30 };
+const CIRC = 314.16;
+const TIMER = { cbs:15, personal:10 };
+
+const HOUSE_META = {
+  geffendor:  { icon:'🦁', name:'Geffendor',   color:'#D3A625' },
+  sliontherin:{ icon:'🐍', name:'Sliontherin',  color:'#BEBEBE' },
+  harlempuff: { icon:'🦡', name:'Harlempuff',   color:'#E8D44D' },
+  kravenclaw: { icon:'🦅', name:'Kravenclaw',   color:'#946B2D' }
+};
+const HOUSES = ['geffendor','sliontherin','harlempuff','kravenclaw'];
+
+let qIdx    = 0;
+let scores  = { geffendor:0, sliontherin:0, harlempuff:0, kravenclaw:0 };
+let selected = new Set();
+let timerID = null;
+let currentTimer = 20;
+let timeLeft = currentTimer;
+
+/* ════════════════════════════════════════
+   AUDIO
+════════════════════════════════════════ */
+const bgMusic = document.getElementById('bgMusic');
+bgMusic.volume = 0.55;
+let muted = false;
+
+const birthdayMusic = new Audio('Hbday.m4a');
+birthdayMusic.volume = 1.0;
+
+const victoryMusic = new Audio('correct.m4a');
+victoryMusic.volume = 1.0;
+victoryMusic.loop = true;
+
+function toggleMute() {
+  muted = !muted;
+  bgMusic.muted = muted;
+  birthdayMusic.muted = muted;
+  victoryMusic.muted = muted;
+  document.getElementById('mute-btn').textContent = muted ? '🔇' : '🔊';
+}
+
+/* ════════════════════════════════════════
+   BACKGROUND PARTICLES + STARS
+════════════════════════════════════════ */
+(function buildStars() {
+  const el = document.getElementById('stars');
+  for (let i=0; i<140; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const sz = Math.random()*1.8+.5;
+    s.style.cssText = `width:${sz}px;height:${sz}px;top:${Math.random()*100}%;left:${Math.random()*100}%;--d:${(Math.random()*3+2).toFixed(1)}s;animation-delay:${(Math.random()*4).toFixed(1)}s`;
+    el.appendChild(s);
+  }
+})();
+
+(function buildEmbers() {
+  const wrap   = document.getElementById('particles');
+  const colors = ['#ff8800','#ffaa00','#ff6600','#ffcc00','#ff4400','#fff0a0'];
+  function spawn() {
+    const e   = document.createElement('div');
+    const sz  = Math.random()*3.5+1.2;
+    const col = colors[Math.floor(Math.random()*colors.length)];
+    const dur = (Math.random()*5+7).toFixed(1);
+    const drift = ((Math.random()-.5)*160).toFixed(0);
+    e.style.cssText = `position:absolute;border-radius:50%;width:${sz}px;height:${sz}px;background:${col};left:${Math.random()*100}%;bottom:-10px;box-shadow:0 0 ${sz*2}px ${col};opacity:${Math.random()*.6+.3};--drift:${drift}px;animation:ember-rise ${dur}s linear forwards;`;
+    wrap.appendChild(e);
+    setTimeout(() => e.remove(), parseFloat(dur)*1000+200);
+  }
+  spawn(); setInterval(spawn, 350);
+})();
+
+/* ── Magic dust — blue-white motes for title screen only ── */
+(function buildMagicDust() {
+  const wrap   = document.getElementById('title-dust');
+  const colors = ['#ffffff','#e0f4ff','#c8e8ff','#9BDDFF','#b8d8ff','#ddeeff'];
+  function spawn() {
+    const e   = document.createElement('div');
+    const sz  = Math.random()*1.8 + 0.6;          // tiny: 0.6–2.4 px
+    const col = colors[Math.floor(Math.random()*colors.length)];
+    const dur = (Math.random()*8 + 9).toFixed(1); // slow: 9–17 s
+    const drift = ((Math.random()-.5)*80).toFixed(0);
+    const startOpacity = (Math.random()*0.4 + 0.2).toFixed(2);
+    e.style.cssText = `position:absolute;border-radius:50%;width:${sz}px;height:${sz}px;` +
+      `background:${col};left:${Math.random()*100}%;bottom:-6px;` +
+      `box-shadow:0 0 ${sz*3}px ${col};opacity:${startOpacity};` +
+      `--tdrift:${drift}px;animation:dust-rise ${dur}s ease-in-out forwards;`;
+    wrap.appendChild(e);
+    setTimeout(() => e.remove(), parseFloat(dur)*1000+200);
+  }
+  // Sparse: one mote every ~900 ms
+  spawn(); setInterval(spawn, 900);
+})();
+
+(function buildRuneTicks() {
+  const g = document.getElementById('rune-ticks');
+  for (let i=0; i<30; i++) {
+    const angle = (i/30)*360 - 90;
+    const r = Math.PI * angle / 180;
+    const inner = i%5===0 ? 42 : 46;
+    const x1 = 60 + inner*Math.cos(r);
+    const y1 = 60 + inner*Math.sin(r);
+    const x2 = 60 + 54*Math.cos(r);
+    const y2 = 60 + 54*Math.sin(r);
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',x1.toFixed(1)); line.setAttribute('y1',y1.toFixed(1));
+    line.setAttribute('x2',x2.toFixed(1)); line.setAttribute('y2',y2.toFixed(1));
+    line.setAttribute('class', i%5===0 ? 'r-tick-lg' : 'r-tick');
+    g.appendChild(line);
+  }
+})();
+
+/* ════════════════════════════════════════
+   SCREENS
+════════════════════════════════════════ */
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  // Show Rules link only on title screen
+  document.getElementById('rules-link').style.display = (id === 'title-screen') ? 'block' : 'none';
+  // Close modal when leaving title screen
+  if (id !== 'title-screen') closeRules();
+}
+
+/* ════════════════════════════════════════
+   RULES MODAL
+════════════════════════════════════════ */
+function openRules()  { document.getElementById('rules-modal').classList.add('open'); }
+function closeRules() { document.getElementById('rules-modal').classList.remove('open'); }
+
+/* ════════════════════════════════════════
+   QUIZ FLOW
+════════════════════════════════════════ */
+function startQuiz() {
+  qIdx = 0;
+  scores = { geffendor:0, sliontherin:0, harlempuff:0, kravenclaw:0 };
+  bgMusic.currentTime = 0;
+  bgMusic.play().catch(() => {});
+  loadQuestion();
+}
+
+function loadQuestion() {
+  if (qIdx >= QUESTIONS.length) { showFinal(); return; }
+
+  // Reset Reveal Answer button state
+  const skipBtn = document.querySelector('.btn-skip');
+  if (skipBtn) {
+    skipBtn.textContent = 'Reveal Answer →';
+    skipBtn.classList.remove('btn-skip-ready');
+  }
+
+  const q = QUESTIONS[qIdx];
+
+  document.getElementById('q-label').textContent = `Question ${qIdx+1} of ${QUESTIONS.length}`;
+  // Show/hide bonus banner
+  document.getElementById('q-bonus-banner').style.display = (q.category === 'bonus') ? 'block' : 'none';
+
+  const db = document.getElementById('q-diff');
+  if (q.category === 'cbs') {
+    db.textContent = 'CBS · 20 pts'; db.className = 'diff-badge cbs';
+  } else if (q.category === 'bonus') {
+    db.textContent = 'Bonus · 30 pts'; db.className = 'diff-badge cbs';
+  } else {
+    db.textContent = 'Personal · 10 pts'; db.className = 'diff-badge personal';
+  }
+
+  if (q.type === 'personal') {
+    document.getElementById('q-type-tag').textContent = `🎭 Personal Question — ${q.name}`;
+  } else if (q.type === 'mc') {
+    document.getElementById('q-type-tag').textContent = 'Multiple Choice — CBS Trivia';
+  } else {
+    document.getElementById('q-type-tag').textContent = 'Open Answer — CBS Trivia';
+  }
+
+  document.getElementById('q-text').textContent = q.text;
+
+  const optsEl = document.getElementById('q-opts');
+  const hintEl = document.getElementById('q-open-hint');
+
+  if (q.type === 'mc') {
+    optsEl.style.display = 'grid'; hintEl.style.display = 'none';
+    optsEl.innerHTML = '';
+    q.options.forEach(opt => {
+      const d = document.createElement('div');
+      d.className = 'q-opt'; d.textContent = opt;
+      optsEl.appendChild(d);
+    });
+  } else if (q.type === 'photo') {
+    optsEl.style.display = 'none'; hintEl.style.display = 'block';
+    hintEl.style.cssText = 'background:none;border:none;padding:0;border-radius:0;';
+    hintEl.innerHTML = `<div style="display:flex;gap:1rem;justify-content:center;align-items:stretch;width:100%;">` +
+      q.photos.map((src, i) => {
+        const name = q.names && q.names[i] ? q.names[i] : '';
+        return `<div style="position:relative;flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:.5rem;">
+          ${name ? `<div style="font-family:'Cinzel Decorative',cursive;font-size:clamp(.9rem,1.8vw,1.3rem);font-weight:700;color:#fff;text-shadow:0 0 10px rgba(201,168,76,.8),0 2px 6px rgba(0,0,0,.9);letter-spacing:.06em;">${name}</div>` : ''}
+          <img src="${src}" style="width:100%;height:min(55vh,480px);border-radius:10px;object-fit:cover;border:2px solid rgba(201,168,76,.5);display:block;">
+        </div>`;
+      }).join('') +
+      `</div>`;
+  } else if (q.type === 'personal') {
+    optsEl.style.display = 'none'; hintEl.style.display = 'block';
+    hintEl.innerHTML = `🎭 Ask <strong>${q.name}</strong> to think about their answer — the class will hear it when the timer ends!`;
+  } else {
+    optsEl.style.display = 'none'; hintEl.style.display = 'block';
+    hintEl.innerHTML = '✍️ Teams write their answer — it will be revealed when the timer ends.';
+  }
+
+  currentTimer = q.timer || TIMER[q.category] || 20;
+  showScreen('question-screen');
+  startTimer();
+}
+
+/* ════════════════════════════════════════
+   TIMER
+════════════════════════════════════════ */
+function startTimer() {
+  clearInterval(timerID);
+  timeLeft = currentTimer;
+  renderTimer();
+  timerID = setInterval(() => {
+    timeLeft--;
+    renderTimer();
+    if (timeLeft <= 0) {
+      clearInterval(timerID);
+      timeLeft = 0;
+      renderTimer();
+      const skipBtn = document.querySelector('.btn-skip');
+      if (skipBtn) {
+        skipBtn.textContent = '✦ Reveal Answer ✦';
+        skipBtn.classList.add('btn-skip-ready');
+      }
+    }
+  }, 1000);
+}
+
+function renderTimer() {
+  const track = document.getElementById('r-track');
+  const numEl = document.getElementById('r-num');
+  const frac  = timeLeft / currentTimer;
+  track.style.strokeDashoffset = CIRC * (1 - frac);
+  numEl.textContent = timeLeft;
+  track.style.stroke = frac > 0.65 ? '#00cc55' : frac > 0.3 ? '#ffaa00' : '#ee2222';
+}
+
+/* ════════════════════════════════════════
+   REVEAL
+════════════════════════════════════════ */
+function revealAnswer() {
+  const fl = document.getElementById('flash');
+  fl.classList.add('active');
+  setTimeout(() => fl.classList.remove('active'), 900);
+
+  const q = QUESTIONS[qIdx];
+
+  document.getElementById('rv-type-tag').textContent =
+    q.type === 'mc'       ? 'Multiple Choice — CBS Trivia' :
+    q.type === 'personal' ? `🎭 Personal Question — ${q.name}` :
+                            'Open Answer — CBS Trivia';
+  document.getElementById('rv-q-text').textContent = q.text;
+
+  const rvOpts = document.getElementById('rv-opts');
+  if (q.type === 'mc') {
+    rvOpts.style.display = 'grid'; rvOpts.innerHTML = '';
+    q.options.forEach((opt, i) => {
+      const letter = String.fromCharCode(65+i);
+      const d = document.createElement('div');
+      d.className = 'reveal-opt' + (letter === q.answer ? ' is-correct' : '');
+      d.textContent = opt + (letter === q.answer ? ' ✓' : '');
+      rvOpts.appendChild(d);
+    });
+  } else {
+    rvOpts.style.display = 'none';
+  }
+
+  const glow = document.getElementById('answer-glow');
+  glow.style.animation = 'none'; glow.offsetHeight; glow.style.animation = '';
+
+  selected.clear();
+  HOUSES.forEach(h => {
+    document.getElementById(`hb-${h}`).classList.remove('selected');
+    document.getElementById(`hbpts-${h}`).textContent = `${scores[h]} pts`;
+  });
+
+  if (q.type === 'personal') {
+    document.getElementById('answer-block').style.display      = 'none';
+    document.getElementById('house-select-wrap').style.display = 'none';
+    document.getElementById('personal-prompt').innerHTML =
+      `Please ask <strong>${q.name}</strong> to reveal the answer!`;
+    document.getElementById('personal-pending').style.display  = 'block';
+  } else {
+    document.getElementById('rv-answer').textContent      = q.answer;
+    document.getElementById('rv-explanation').textContent = q.explanation;
+    document.getElementById('answer-block').style.display      = 'block';
+    document.getElementById('personal-pending').style.display  = 'none';
+    document.getElementById('house-select-wrap').style.display = 'block';
+  }
+
+  // Final question: play birthday song and show the special birthday screen
+  if (qIdx === QUESTIONS.length - 1) {
+    bgMusic.pause();
+    birthdayMusic.currentTime = 0;
+    birthdayMusic.play().catch(() => {});
+    showScreen('birthday-screen');
+    return;
+  }
+
+  showScreen('reveal-screen');
+}
+
+function showPersonalAnswer() {
+  document.getElementById('personal-pending').style.display  = 'none';
+  document.getElementById('rv-answer').textContent           = '✓ Answer confirmed live by the class!';
+  document.getElementById('rv-explanation').textContent      = '';
+  document.getElementById('answer-block').style.display      = 'block';
+  document.getElementById('house-select-wrap').style.display = 'block';
+}
+
+/* ════════════════════════════════════════
+   HOUSE TOGGLE
+════════════════════════════════════════ */
+function toggleHouse(h) {
+  const el = document.getElementById(`hb-${h}`);
+  if (selected.has(h)) { selected.delete(h); el.classList.remove('selected'); }
+  else                 { selected.add(h);    el.classList.add('selected');    }
+}
+
+/* ════════════════════════════════════════
+   CONFIRM SCORES
+════════════════════════════════════════ */
+function confirmScores() {
+  const q   = QUESTIONS[qIdx];
+  const pts = PTS[q.category];
+  const awarded = {};
+  selected.forEach(h => { scores[h] += pts; awarded[h] = pts; });
+  showScoreboard(awarded);
+}
+
+/* ════════════════════════════════════════
+   SCOREBOARD
+════════════════════════════════════════ */
+function showScoreboard(awarded) {
+  document.getElementById('sb-q-num').textContent = qIdx + 1;
+
+  const row = document.getElementById('pts-awarded-row');
+  row.innerHTML = '';
+  if (Object.keys(awarded).length === 0) {
+    const tag = document.createElement('div');
+    tag.className = 'pts-awarded-tag'; tag.style.color = '#888';
+    tag.textContent = 'No points awarded this round';
+    row.appendChild(tag);
+  } else {
+    Object.entries(awarded).forEach(([h, pts]) => {
+      const tag = document.createElement('div');
+      tag.className = 'pts-awarded-tag'; tag.style.color = HOUSE_META[h].color;
+      tag.textContent = `${HOUSE_META[h].icon} ${HOUSE_META[h].name} +${pts}`;
+      row.appendChild(tag);
+    });
+  }
+
+  renderBarChart(awarded);
+
+  const isLast = qIdx >= QUESTIONS.length - 1;
+  document.getElementById('btn-next').textContent =
+    isLast ? '✦ View Final Results ✦' : 'Next Question →';
+  document.getElementById('sb-q-progress').textContent =
+    isLast ? 'Final question complete!' :
+    `${QUESTIONS.length - qIdx - 1} question${QUESTIONS.length-qIdx-1!==1?'s':''} remaining`;
+
+  showScreen('scoreboard-screen');
+}
+
+function renderBarChart(awarded) {
+  const wrap     = document.getElementById('hourglasses');
+  wrap.innerHTML = '';
+  const maxPts   = Math.max(...Object.values(scores), 1);
+  const topScore = Math.max(...Object.values(scores));
+
+  const chart = document.createElement('div');
+  chart.className = 'bar-chart';
+
+  const sorted = [...HOUSES].sort((a, b) => scores[b] - scores[a]);
+
+  sorted.forEach(h => {
+    const pts      = scores[h];
+    const frac     = pts / maxPts;
+    const isLeader = pts === topScore && pts > 0;
+    const meta     = HOUSE_META[h];
+    const col      = meta.color;
+    const newPts   = awarded && awarded[h] ? awarded[h] : 0;
+
+    const row = document.createElement('div');
+    row.className = `bar-row${isLeader ? ' leader' : ''}`;
+    row.innerHTML = `
+      <div class="bar-label" style="color:${col}">${meta.icon} ${meta.name}</div>
+      <div class="bar-track">
+        <div class="bar-fill" data-target="${(frac * 100).toFixed(2)}"
+             style="background:${col};opacity:.85;box-shadow:0 0 10px ${col}55;"></div>
+      </div>
+      <div class="bar-pts" style="color:${col}">${pts}${newPts ? `<span class="bar-new-pts"> +${newPts}</span>` : ''}</div>`;
+    chart.appendChild(row);
+  });
+
+  wrap.appendChild(chart);
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      chart.querySelectorAll('.bar-fill').forEach(bar => {
+        bar.style.width = bar.dataset.target + '%';
+      });
+    });
+  });
+}
+
+/* ════════════════════════════════════════
+   BIRTHDAY BACK TO GAME
+════════════════════════════════════════ */
+function birthdayBackToGame() {
+  birthdayMusic.pause();
+  birthdayMusic.currentTime = 0;
+  bgMusic.currentTime = 0;
+  bgMusic.play().catch(() => {});
+  // reveal-screen was already populated by revealAnswer() — just show it
+  showScreen('reveal-screen');
+}
+
+/* ════════════════════════════════════════
+   REVISE — return to reveal screen, roll back this question's points
+════════════════════════════════════════ */
+function goBackToReveal() {
+  const q   = QUESTIONS[qIdx];
+  const pts = PTS[q.category];
+  // Roll back points for whichever houses were selected
+  selected.forEach(h => { scores[h] = Math.max(0, scores[h] - pts); });
+  selected.clear();
+  HOUSES.forEach(h => {
+    document.getElementById(`hb-${h}`).classList.remove('selected');
+    document.getElementById(`hbpts-${h}`).textContent = `${scores[h]} pts`;
+  });
+  showScreen('reveal-screen');
+}
+
+/* ════════════════════════════════════════
+   NEXT QUESTION
+════════════════════════════════════════ */
+function nextQuestion() {
+  qIdx++;
+  if (qIdx >= QUESTIONS.length) {
+    // Stop birthday song, resume background music from the top
+    birthdayMusic.pause();
+    birthdayMusic.currentTime = 0;
+    bgMusic.currentTime = 0;
+    bgMusic.play().catch(() => {});
+    showFinal();
+    return;
+  }
+  loadQuestion();
+}
+
+/* ════════════════════════════════════════
+   FINAL SCREEN
+════════════════════════════════════════ */
+function showFinal() {
+  bgMusic.pause(); bgMusic.currentTime = 0;
+  birthdayMusic.pause(); birthdayMusic.currentTime = 0;
+  victoryMusic.currentTime = 0;
+  victoryMusic.play().catch(() => {});
+  const sorted   = Object.entries(scores).sort((a,b) => b[1]-a[1]);
+  const [winner] = sorted[0];
+  const meta     = HOUSE_META[winner];
+
+  const wb = document.getElementById('winner-banner');
+  wb.textContent = `${meta.icon} ${meta.name} Wins the House Cup!`;
+  wb.className = `winner-banner ${winner}`;
+
+  const bgMap = {
+    geffendor:   'geffendor-bg.jpg',
+    harlempuff:  'harlempuff-bg.jpg',
+    sliontherin: 'sliontherin-bg.jpg',
+    kravenclaw:  'kravenclaw-bg.jpg'
+  };
+  document.getElementById('final-screen').style.backgroundImage = `url('${bgMap[winner]}')`;
+
+  const rank = document.getElementById('final-ranking');
+  rank.innerHTML = '';
+  const medals = ['🥇','🥈','🥉','4th'];
+  sorted.forEach(([h, pts], i) => {
+    const m = HOUSE_META[h];
+    const row = document.createElement('div');
+    row.className = `rank-row ${h} rank-${i+1}`;
+    row.innerHTML = `
+      <div class="rank-medal">${medals[i]}</div>
+      <div class="rank-icon">${m.icon}</div>
+      <div class="rank-info"><div class="rank-name">${m.name}</div></div>
+      <div class="rank-pts">${pts} pts</div>`;
+    rank.appendChild(row);
+  });
+
+  const minPts  = sorted[sorted.length - 1][1];
+  const losers  = sorted.filter(([, pts]) => pts === minPts).map(([h]) => h);
+  const loserNames = losers.map(h => `${HOUSE_META[h].icon} ${HOUSE_META[h].name}`).join(' & ');
+  document.getElementById('loser-banner').textContent =
+    `⚠️ ${loserNames} must drink the entire cup! The Loser's Gulp awaits... 🍺`;
+
+  showScreen('final-screen');
+}
+
+/* ════════════════════════════════════════
+   RESET
+════════════════════════════════════════ */
+function resetQuiz() {
+  clearInterval(timerID);
+  bgMusic.pause(); bgMusic.currentTime = 0;
+  victoryMusic.pause(); victoryMusic.currentTime = 0;
+  qIdx = 0;
+  scores = { geffendor:0, sliontherin:0, harlempuff:0, kravenclaw:0 };
+  selected.clear();
+  showScreen('title-screen');
+}
+
+// Show Rules link on initial load (title screen is active by default)
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('rules-link').style.display = 'block';
+});
+</script>
+
+</body>
+</html>
